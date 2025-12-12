@@ -39,7 +39,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
   const filterBy = route.params?.filterBy || 'All';
   const courseId = route.params?.courseId;
 
-  // Updated dishes matching your new categories (4 dishes per category)
+  // Updated dishes 
   const courses = [
     {
       id: 1,
@@ -68,7 +68,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
          {
           id: 2,
           title: 'Seared Salmon Steak',
-          image: require('../assets/salmon-steak.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Atlantic salmon with crispy skin and lemon butter sauce',
           price: 28.99,
           preparationTime: '20 mins',
@@ -88,7 +88,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 3,
           title: 'Beef Wellington',
-          image: require('../assets/beef-wellington.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Filet mignon wrapped in puff pastry with mushroom duxelles',
           price: 42.99,
           preparationTime: '2.5 hours',
@@ -108,7 +108,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 4,
           title: 'Chicken Supreme',
-          image: require('../assets/chicken-supreme.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Pan-seared chicken breast with creamy wild mushroom sauce',
           price: 24.99,
           preparationTime: '35 mins',
@@ -134,7 +134,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 5,
           title: 'Smoked Salmon Platter',
-          image: require('../assets/smoked-salmon.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'House-smoked salmon with capers, red onion and crème fraîche',
           price: 22.99,
           preparationTime: '15 mins',
@@ -155,7 +155,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 6,
           title: 'Beef Carpaccio',
-          image: require('../assets/carpaccio.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Paper-thin sliced beef with truffle oil and Parmesan',
           price: 26.99,
           preparationTime: '20 mins',
@@ -175,7 +175,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 7,
           title: 'Summer Salad Bowl',
-          image: require('../assets/summer-salad.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Fresh seasonal vegetables with goat cheese and balsamic glaze',
           price: 18.99,
           preparationTime: '15 mins',
@@ -195,7 +195,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 8,
           title: 'Charcuterie Board',
-          image: require('../assets/charcuterie.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Artisanal cured meats, cheeses and accompaniments',
           price: 32.99,
           preparationTime: '25 mins',
@@ -222,7 +222,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 9,
           title: 'Sourdough Bread',
-          image: require('../assets/sourdough.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Artisanal sourdough with crispy crust and airy crumb',
           price: 8.99,
           preparationTime: '24 hours + baking',
@@ -240,7 +240,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 10,
           title: 'Croissants',
-          image: require('../assets/croissants.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Buttery, flaky French croissants',
           price: 6.99,
           preparationTime: '12 hours + baking',
@@ -259,7 +259,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 11,
           title: 'Chocolate Éclairs',
-          image: require('../assets/eclairs.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Choux pastry filled with vanilla cream and chocolate glaze',
           price: 7.99,
           preparationTime: '2 hours',
@@ -278,7 +278,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 12,
           title: 'Apple Tart',
-          image: require('../assets/apple-tart.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Classic French apple tart with caramelized edges',
           price: 9.99,
           preparationTime: '1.5 hours',
@@ -304,7 +304,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 13,
           title: 'Craft IPA',
-          image: require('../assets/ipa.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Locally brewed India Pale Ale with citrus notes',
           price: 7.99,
           preparationTime: 'Served cold',
@@ -323,7 +323,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 14,
           title: 'Barista Coffee',
-          image: require('../assets/barista-coffee.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Single-origin espresso with latte art',
           price: 4.99,
           preparationTime: '5 mins',
@@ -340,7 +340,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 15,
           title: 'House Sangria',
-          image: require('../assets/sangria.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Red wine sangria with fresh fruits and brandy',
           price: 9.99,
           preparationTime: '2 hours + chilling',
@@ -359,7 +359,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
         {
           id: 16,
           title: 'Craft Cocktail',
-          image: require('../assets/craft-cocktail.jpg'),
+          image: require('../assets/background.jpg'),
           description: 'Signature gin cocktail with botanical infusion',
           price: 12.99,
           preparationTime: '8 mins',
