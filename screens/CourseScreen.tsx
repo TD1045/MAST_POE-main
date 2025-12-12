@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,42 +18,96 @@ type CourseScreenProps = {
   currentUser: any;
 };
 
+// 
+// For now, I'll create a mock structure
+const mockDishesByCourse = {
+  'Hot plates': [
+    { price: 34.99 },
+    { price: 28.99 },
+    { price: 42.99 },
+    { price: 24.99 }
+  ],
+  'Cold plates': [
+    { price: 22.99 },
+    { price: 26.99 },
+    { price: 18.99 },
+    { price: 32.99 }
+  ],
+  'Baked goods': [
+    { price: 8.99 },
+    { price: 6.99 },
+    { price: 7.99 },
+    { price: 9.99 }
+  ],
+  'Beverages': [
+    { price: 4.99 },
+    { price: 9.99 },
+    { price: 12.99 },
+    { price: 3.99 }
+  ]
+};
+
 const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, currentUser }) => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [menuAnimation] = useState(new Animated.Value(0));
   const [searchQuery, setSearchQuery] = useState('');
+  const [averagePrices, setAveragePrices] = useState<{[key: string]: number}>({});
 
-  // Course categories with average prices
+  // Course categories
   const courses = [
     {
       id: 1,
-      name: 'Appetizers',
-      averagePrice: 12.99,
+      name: 'Hot plates',
       image: require('../assets/background.jpg'),
-      description: 'Starters and small plates',
+      description: 'Hot portions straight from the fire',
     },
     {
       id: 2,
-      name: 'Main Courses',
-      averagePrice: 24.99,
+      name: 'Cold plates',
       image: require('../assets/background.jpg'),
-      description: 'Hearty main dishes',
+      description: 'Cold cuts with love to warm you',
     },
     {
       id: 3,
-      name: 'Desserts',
-      averagePrice: 9.99,
+      name: 'Baked goods',
       image: require('../assets/background.jpg'),
-      description: 'Sweet treats and desserts',
+      description: 'Freshly baked treats and desserts',
     },
     {
       id: 4,
       name: 'Beverages',
-      averagePrice: 5.99,
       image: require('../assets/background.jpg'),
       description: 'Drinks and refreshments',
     },
   ];
+
+  // Calculates average prices for each course
+  useEffect(() => {
+    const calculateAverages = () => {
+      const averages: {[key: string]: number} = {};
+      
+      Object.keys(mockDishesByCourse).forEach(courseName => {
+        const dishes = mockDishesByCourse[courseName as keyof typeof mockDishesByCourse];
+        if (dishes && dishes.length > 0) {
+          const total = dishes.reduce((sum, dish) => sum + dish.price, 0);
+          averages[courseName] = total / dishes.length;
+        }
+      });
+      
+      setAveragePrices(averages);
+    };
+
+    calculateAverages();
+  }, []);
+
+  // Function to calculate average price for a specific course
+  const calculateAveragePrice = (courseName: string): number => {
+    const dishes = mockDishesByCourse[courseName as keyof typeof mockDishesByCourse];
+    if (!dishes || dishes.length === 0) return 0;
+    
+    const total = dishes.reduce((sum, dish) => sum + dish.price, 0);
+    return total / dishes.length;
+  };
 
   const toggleMenu = () => {
     if (isMenuVisible) {
@@ -87,8 +141,19 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
   };
 
   const handleCoursePress = (course: any) => {
-    // Navigate to filtered menu screen with selected course
-    navigation.navigate('Menu', { filterBy: course.name });
+    // Navigate to UserMenuScreen with the selected course filter
+    navigation.navigate('UserMenu', { 
+      filterBy: course.name,
+      courseId: course.id 
+    });
+  };
+
+  const handleAddDishPress = () => {
+    if (isChef && currentUser) {
+      navigation.navigate('Private Menu');
+    } else {
+      navigation.navigate('Profile');
+    }
   };
 
   return (
@@ -128,9 +193,11 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
             <TouchableOpacity style={styles.menuItem} onPress={() => navigateToScreen('Home')}>
               <Text style={styles.menuItemText}>Home</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigateToScreen("Private Menu")}>
-              <Text style={styles.menuItemText}>Private Menu</Text>
-            </TouchableOpacity>
+            {isChef && (
+              <TouchableOpacity style={styles.menuItem} onPress={() => navigateToScreen('Private Menu')}>
+                <Text style={styles.menuItemText}>Chef Dashboard</Text>
+              </TouchableOpacity>
+            )}
           </Animated.View>
         </TouchableOpacity>
       </Modal>
@@ -140,21 +207,46 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
         contentContainerStyle={styles.courseGrid}
         showsVerticalScrollIndicator={false}
       >
-        {courses.map((course) => (
-          <TouchableOpacity
-            key={course.id}
-            style={styles.courseCard}
-            onPress={() => handleCoursePress(course)}
-          >
-            <Image source={course.image} style={styles.courseImage} resizeMode="cover" />
-            <View style={styles.courseOverlay}>
-              <Text style={styles.courseName}>{course.name}</Text>
-              <Text style={styles.courseDescription}>{course.description}</Text>
-              <Text style={styles.coursePrice}>Avg: R{course.averagePrice.toFixed(2)}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {courses.map((course) => {
+          const avgPrice = averagePrices[course.name] || calculateAveragePrice(course.name);
+          
+          return (
+            <TouchableOpacity
+              key={course.id}
+              style={styles.courseCard}
+              onPress={() => handleCoursePress(course)}
+            >
+              <Image source={course.image} style={styles.courseImage} resizeMode="cover" />
+              <View style={styles.courseOverlay}>
+                <Text style={styles.courseName}>{course.name}</Text>
+                <Text style={styles.courseDescription}>{course.description}</Text>
+                
+                {/* Average Price Display with Calculator Icon */}
+                <View style={styles.averagePriceContainer}>
+                  <Text style={styles.averagePriceLabel}>Average Price:</Text>
+                  <View style={styles.priceDisplay}>
+                    <Text style={styles.calculatorIcon}>🧮</Text>
+                    <Text style={styles.coursePrice}>R{avgPrice.toFixed(2)}</Text>
+                  </View>
+                  <Text style={styles.priceNote}>
+                    Based on {mockDishesByCourse[course.name as keyof typeof mockDishesByCourse]?.length || 0} dishes
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
+
+      {/* Chef-only Add Dish Button */}
+      {isChef && (
+        <TouchableOpacity 
+          style={styles.addDishButton} 
+          onPress={handleAddDishPress}
+        >
+          <Text style={styles.addDishButtonText}>➕ Add New Dish</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -245,7 +337,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   courseCard: {
-    height: 180,
+    height: 200,
     marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
@@ -260,30 +352,83 @@ const styles = StyleSheet.create({
   },
   courseOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   courseName: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
     color: '#fff',
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   courseDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#e5e7eb',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
     fontWeight: '500',
+    fontStyle: 'italic',
+  },
+  averagePriceContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: '80%',
+    marginTop: 8,
+  },
+  averagePriceLabel: {
+    fontSize: 14,
+    color: '#e5e7eb',
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  priceDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  calculatorIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
   coursePrice: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#ec4899',
+    letterSpacing: 0.5,
+  },
+  priceNote: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+  },
+  addDishButton: {
+    margin: 20,
+    backgroundColor: 'rgba(236, 72, 153, 0.9)',
+    paddingVertical: 16,
+    borderRadius: 15,
+    alignItems: 'center',
+    shadowColor: '#ec4899',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  addDishButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
 });

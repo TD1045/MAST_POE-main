@@ -1,5 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, Alert, StatusBar, } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  Image, Dimensions, Animated, Alert, StatusBar, Modal,
+  TextInput 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -11,123 +15,457 @@ type UserMenuScreenProps = {
   currentUser: any;
 };
 
-const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isChef, currentUser }) => {
+// Cart Item Type
+type CartItem = {
+  id: number;
+  title: string;
+  price: number;
+  quantity: number;
+  image: any;
+  category: string;
+};
+
+const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ 
+  navigation, route, isChef, currentUser 
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isCartVisible, setIsCartVisible] = useState(false);
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  const filterBy = route.params?.filterBy || 'All';
+  const courseId = route.params?.courseId;
 
+  // Updated dishes matching your new categories (4 dishes per category)
   const courses = [
     {
       id: 1,
-      title: 'Italian Cuisine',
+      title: 'Hot Plates',
       dishes: [
         {
           id: 1,
-          title: 'Spaghetti Carbonara',
-          image: require('../assets/carbonara.jpg'),
-          description: 'Classic Roman pasta dish with eggs, cheese, pancetta, and black pepper',
-          price: 18.99,
-          preparationTime: '25 mins',
+          title: 'Braised Lamb Shank',
+          image: require('../assets/background.jpg'),
+          description: 'Tender lamb slow-cooked in red wine and herbs',
+          price: 34.99,
+          preparationTime: '3 hours',
           ingredients: [
-            'Spaghetti',
-            'Eggs',
-            'Pecorino Romano cheese',
-            'Pancetta',
-            'Black pepper',
-            'Salt'
+            'Lamb shank',
+            'Red wine',
+            'Fresh rosemary',
+            'Garlic',
+            'Carrots',
+            'Potatoes'
           ],
-          calories: 650,
-          difficulty: 'Medium',
-          chefTips: 'Use fresh eggs and grate the cheese finely for best results'
+          calories: 780,
+          difficulty: 'Expert',
+          chefTips: 'Braise at low temperature for maximum tenderness',
+          category: 'Hot plates'
         },
         {
           id: 2,
-          title: 'Margherita Pizza',
-          image: require('../assets/pizza.jpg'),
-          description: 'Neapolitan pizza with San Marzano tomatoes, fresh mozzarella, basil, and olive oil',
-          price: 16.99,
-          preparationTime: '15 mins',
+          title: 'Seared Salmon Steak',
+          image: require('../assets/background.jpg'),
+          description: 'Atlantic salmon with crispy skin and lemon butter sauce',
+          price: 28.99,
+          preparationTime: '20 mins',
           ingredients: [
-            'Pizza dough',
-            'San Marzano tomatoes',
-            'Fresh mozzarella',
-            'Fresh basil',
-            'Extra virgin olive oil',
-            'Salt'
+            'Salmon fillet',
+            'Lemon',
+            'Butter',
+            'Fresh dill',
+            'Asparagus',
+            'Baby potatoes'
           ],
-          calories: 850,
-          difficulty: 'Easy',
-          chefTips: 'Cook in a very hot oven for authentic Neapolitan crust'
+          calories: 520,
+          difficulty: 'Medium',
+          chefTips: 'Start skin-side down for perfect crispiness',
+          category: 'Hot plates'
         },
         {
           id: 3,
-          title: 'Tiramisu',
-          image: require('../assets/tiramisu.jpg'),
-          description: 'Classic Italian dessert with coffee-soaked ladyfingers and mascarpone cream',
-          price: 8.99,
-          preparationTime: '30 mins + chilling',
+          title: 'Beef Wellington',
+          image: require('../assets/background.jpg'),
+          description: 'Filet mignon wrapped in puff pastry with mushroom duxelles',
+          price: 42.99,
+          preparationTime: '2.5 hours',
           ingredients: [
-            'Ladyfingers',
-            'Espresso coffee',
-            'Mascarpone cheese',
-            'Eggs',
-            'Sugar',
-            'Cocoa powder'
+            'Beef tenderloin',
+            'Puff pastry',
+            'Mushrooms',
+            'Prosciutto',
+            'Dijon mustard',
+            'Egg wash'
           ],
-          calories: 420,
+          calories: 920,
+          difficulty: 'Expert',
+          chefTips: 'Chill thoroughly before baking to prevent leakage',
+          category: 'Hot plates'
+        },
+        {
+          id: 4,
+          title: 'Chicken Supreme',
+          image: require('../assets/background.jpg'),
+          description: 'Pan-seared chicken breast with creamy wild mushroom sauce',
+          price: 24.99,
+          preparationTime: '35 mins',
+          ingredients: [
+            'Chicken breast',
+            'Wild mushrooms',
+            'Cream',
+            'White wine',
+            'Shallots',
+            'Thyme'
+          ],
+          calories: 480,
           difficulty: 'Medium',
-          chefTips: 'Chill for at least 4 hours for best flavor development'
+          chefTips: 'Rest chicken before slicing to retain juices',
+          category: 'Hot plates'
         }
       ]
     },
     {
       id: 2,
-      title: 'Japanese Cuisine',
+      title: 'Cold Plates',
       dishes: [
         {
-          id: 4,
-          title: 'Salmon Sashimi',
-          image: require('../assets/sashimi.jpg'),
-          description: 'Fresh Atlantic salmon sliced thin and served with soy sauce and wasabi',
+          id: 5,
+          title: 'Smoked Salmon Platter',
+          image: require('../assets/background.jpg'),
+          description: 'House-smoked salmon with capers, red onion and crème fraîche',
           price: 22.99,
-          preparationTime: '10 mins',
+          preparationTime: '15 mins',
           ingredients: [
-            'Fresh salmon fillet',
-            'Soy sauce',
-            'Wasabi',
-            'Pickled ginger',
-            'Shiso leaves'
+            'Smoked salmon',
+            'Capers',
+            'Red onion',
+            'Crème fraîche',
+            'Lemon',
+            'Dill',
+            'Rye bread'
+          ],
+          calories: 320,
+          difficulty: 'Easy',
+          chefTips: 'Slice salmon against the grain for perfect texture',
+          category: 'Cold plates'
+        },
+        {
+          id: 6,
+          title: 'Beef Carpaccio',
+          image: require('../assets/background.jpg'),
+          description: 'Paper-thin sliced beef with truffle oil and Parmesan',
+          price: 26.99,
+          preparationTime: '20 mins',
+          ingredients: [
+            'Beef tenderloin',
+            'Truffle oil',
+            'Parmesan cheese',
+            'Arugula',
+            'Lemon juice',
+            'Black pepper'
           ],
           calories: 280,
           difficulty: 'Expert',
-          chefTips: 'Use the sharpest knife possible for clean cuts'
+          chefTips: 'Freeze beef slightly for easier slicing',
+          category: 'Cold plates'
         },
         {
-          id: 5,
-          title: 'Chicken Teriyaki',
-          image: require('../assets/teriyaki.jpg'),
-          description: 'Grilled chicken glazed with sweet teriyaki sauce, served with steamed rice',
-          price: 19.99,
-          preparationTime: '20 mins',
+          id: 7,
+          title: 'Summer Salad Bowl',
+          image: require('../assets/background.jpg'),
+          description: 'Fresh seasonal vegetables with goat cheese and balsamic glaze',
+          price: 18.99,
+          preparationTime: '15 mins',
           ingredients: [
-            'Chicken thighs',
-            'Soy sauce',
-            'Mirin',
-            'Sake',
-            'Sugar',
-            'Ginger',
-            'Garlic'
+            'Mixed greens',
+            'Cherry tomatoes',
+            'Cucumber',
+            'Goat cheese',
+            'Avocado',
+            'Balsamic reduction'
           ],
-          calories: 520,
+          calories: 240,
           difficulty: 'Easy',
-          chefTips: 'Marinate the chicken for at least 30 minutes for deeper flavor'
+          chefTips: 'Toss salad just before serving to maintain crispness',
+          category: 'Cold plates'
+        },
+        {
+          id: 8,
+          title: 'Charcuterie Board',
+          image: require('../assets/background.jpg'),
+          description: 'Artisanal cured meats, cheeses and accompaniments',
+          price: 32.99,
+          preparationTime: '25 mins',
+          ingredients: [
+            'Prosciutto',
+            'Salami',
+            'Brie cheese',
+            'Blue cheese',
+            'Grapes',
+            'Fig jam',
+            'Crackers'
+          ],
+          calories: 450,
+          difficulty: 'Easy',
+          chefTips: 'Arrange from mild to strong flavors clockwise',
+          category: 'Cold plates'
+        }
+      ]
+    },
+    {
+      id: 3,
+      title: 'Baked Goods',
+      dishes: [
+        {
+          id: 9,
+          title: 'Sourdough Bread',
+          image: require('../assets/background.jpg'),
+          description: 'Artisanal sourdough with crispy crust and airy crumb',
+          price: 8.99,
+          preparationTime: '24 hours + baking',
+          ingredients: [
+            'Sourdough starter',
+            'Bread flour',
+            'Water',
+            'Salt'
+          ],
+          calories: 220,
+          difficulty: 'Expert',
+          chefTips: 'Maintain consistent temperature for proper fermentation',
+          category: 'Baked goods'
+        },
+        {
+          id: 10,
+          title: 'Croissants',
+          image: require('../assets/background.jpg'),
+          description: 'Buttery, flaky French croissants',
+          price: 6.99,
+          preparationTime: '12 hours + baking',
+          ingredients: [
+            'Butter',
+            'Bread flour',
+            'Milk',
+            'Sugar',
+            'Yeast'
+          ],
+          calories: 280,
+          difficulty: 'Expert',
+          chefTips: 'Keep butter cold and work quickly during lamination',
+          category: 'Baked goods'
+        },
+        {
+          id: 11,
+          title: 'Chocolate Éclairs',
+          image: require('../assets/background.jpg'),
+          description: 'Choux pastry filled with vanilla cream and chocolate glaze',
+          price: 7.99,
+          preparationTime: '2 hours',
+          ingredients: [
+            'Choux pastry',
+            'Vanilla pastry cream',
+            'Dark chocolate',
+            'Cream',
+            'Powdered sugar'
+          ],
+          calories: 320,
+          difficulty: 'Medium',
+          chefTips: 'Poke holes in baked shells to release steam',
+          category: 'Baked goods'
+        },
+        {
+          id: 12,
+          title: 'Apple Tart',
+          image: require('../assets/background.jpg'),
+          description: 'Classic French apple tart with caramelized edges',
+          price: 9.99,
+          preparationTime: '1.5 hours',
+          ingredients: [
+            'Puff pastry',
+            'Apples',
+            'Butter',
+            'Sugar',
+            'Cinnamon',
+            'Apricot jam'
+          ],
+          calories: 380,
+          difficulty: 'Medium',
+          chefTips: 'Overlap apple slices tightly for beautiful presentation',
+          category: 'Baked goods'
+        }
+      ]
+    },
+    {
+      id: 4,
+      title: 'Beverages',
+      dishes: [
+        {
+          id: 13,
+          title: 'Craft IPA',
+          image: require('../assets/background.jpg'),
+          description: 'Locally brewed India Pale Ale with citrus notes',
+          price: 7.99,
+          preparationTime: 'Served cold',
+          ingredients: [
+            'Hops',
+            'Malted barley',
+            'Yeast',
+            'Water',
+            'Citrus peel'
+          ],
+          calories: 180,
+          difficulty: 'Easy',
+          chefTips: 'Serve at 8°C for optimal flavor',
+          category: 'Beverages'
+        },
+        {
+          id: 14,
+          title: 'Barista Coffee',
+          image: require('../assets/background.jpg'),
+          description: 'Single-origin espresso with latte art',
+          price: 4.99,
+          preparationTime: '5 mins',
+          ingredients: [
+            'Arabica beans',
+            'Fresh milk',
+            'Filtered water'
+          ],
+          calories: 120,
+          difficulty: 'Expert',
+          chefTips: 'Use freshly ground beans for best aroma',
+          category: 'Beverages'
+        },
+        {
+          id: 15,
+          title: 'House Sangria',
+          image: require('../assets/background.jpg'),
+          description: 'Red wine sangria with fresh fruits and brandy',
+          price: 9.99,
+          preparationTime: '2 hours + chilling',
+          ingredients: [
+            'Red wine',
+            'Brandy',
+            'Orange juice',
+            'Mixed fruits',
+            'Soda water'
+          ],
+          calories: 210,
+          difficulty: 'Easy',
+          chefTips: 'Let sangria sit overnight for deeper flavor',
+          category: 'Beverages'
+        },
+        {
+          id: 16,
+          title: 'Craft Cocktail',
+          image: require('../assets/background.jpg'),
+          description: 'Signature gin cocktail with botanical infusion',
+          price: 12.99,
+          preparationTime: '8 mins',
+          ingredients: [
+            'Premium gin',
+            'Fresh lime',
+            'Simple syrup',
+            'Cucumber',
+            'Mint',
+            'Soda water'
+          ],
+          calories: 160,
+          difficulty: 'Medium',
+          chefTips: 'Use large ice cubes to minimize dilution',
+          category: 'Beverages' 
         }
       ]
     }
   ];
 
-  const allDishes = courses.flatMap(course => course.dishes);
+  // Filter dishes based on route params
+  const filteredCourses = filterBy === 'All' 
+    ? courses 
+    : courses.filter(course => course.title === filterBy);
+  
+  const allDishes = filteredCourses.flatMap(course => course.dishes);
+  const filteredDishes = courseId 
+    ? courses.find(c => c.id === courseId)?.dishes || allDishes
+    : allDishes;
 
+  // Cart Functions
+  const addToCart = (dish: any) => {
+    if (!currentUser) {
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to add items to your cart.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Sign In', 
+            onPress: () => navigation.navigate('Profile') 
+          }
+        ]
+      );
+      return;
+    }
+
+    const existingItem = cartItems.find(item => item.id === dish.id);
+    if (existingItem) {
+      setCartItems(cartItems.map(item =>
+        item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+      ));
+    } else {
+      setCartItems([...cartItems, { 
+        ...dish, 
+        quantity: 1,
+        category: dish.category
+      }]);
+    }
+    
+    Alert.alert(
+      'Added to Cart',
+      `${dish.title} has been added to your cart.`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const removeFromCart = (dishId: number) => {
+    setCartItems(cartItems.filter(item => item.id !== dishId));
+  };
+
+  const updateQuantity = (dishId: number, change: number) => {
+    setCartItems(cartItems.map(item => {
+      if (item.id === dishId) {
+        const newQuantity = item.quantity + change;
+        if (newQuantity <= 0) {
+          return null;
+        }
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }).filter(Boolean) as CartItem[]);
+  };
+
+  const clearCart = () => {
+    Alert.alert(
+      'Clear Cart',
+      'Are you sure you want to clear your cart?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Clear', 
+          style: 'destructive',
+          onPress: () => setCartItems([]) 
+        }
+      ]
+    );
+  };
+
+  const getTotalPrice = () => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+  };
+
+  const getItemCount = () => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Carousel Functions
   const onScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
     { useNativeDriver: false }
@@ -159,82 +497,127 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
   };
 
   // Show alert on first render
-  React.useEffect(() => {
+  useEffect(() => {
     showScrollAlert();
   }, []);
 
-  const renderDishItem = ({ item, index }: { item: any; index: number }) => (
-    <ScrollView 
-      style={styles.dishContainer}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.dishContent}
-    >
-      <View style={styles.imageContainer}>
-        <Image 
-          source={item.image} 
-          style={styles.dishImage}
-          resizeMode="cover"
-        />
-        <View style={styles.imageOverlay} />
-        <Text style={styles.dishTitle}>{item.title}</Text>
-        <View style={styles.dishBadge}>
-          <Text style={styles.dishBadgeText}>R{item.price}</Text>
-        </View>
-      </View>
+  const renderDishItem = ({ item, index }: { item: any; index: number }) => {
+    const cartItem = cartItems.find(cartItem => cartItem.id === item.id);
+    const quantity = cartItem?.quantity || 0;
 
-      <View style={styles.detailsContainer}>
-
-        <View style={styles.basicInfo}>
-          <Text style={styles.dishDescription}>{item.description}</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Prep Time</Text>
-              <Text style={styles.statValue}>{item.preparationTime}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Difficulty</Text>
-              <Text style={styles.statValue}>{item.difficulty}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Calories</Text>
-              <Text style={styles.statValue}>{item.calories}</Text>
-            </View>
+    return (
+      <ScrollView 
+        style={styles.dishContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.dishContent}
+      >
+        <View style={styles.imageContainer}>
+          <Image 
+            source={item.image} 
+            style={styles.dishImage}
+            resizeMode="cover"
+          />
+          <View style={styles.imageOverlay} />
+          <Text style={styles.dishTitle}>{item.title}</Text>
+          <View style={styles.dishBadge}>
+            <Text style={styles.dishBadgeText}>R{item.price}</Text>
           </View>
+          
+          {/* Chef-only Add Dish Button */}
+          {isChef && (
+            <TouchableOpacity 
+              style={styles.chefAddButton}
+              onPress={() => navigation.navigate('Private Menu', { dishToEdit: item })}
+            >
+              <Text style={styles.chefAddButtonText}>✏️ Edit Dish</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingredients</Text>
-          <View style={styles.ingredientsList}>
-            {item.ingredients.map((ingredient: string, idx: number) => (
-              <View key={idx} style={styles.ingredientItem}>
-                <Text style={styles.ingredientDot}>•</Text>
-                <Text style={styles.ingredientText}>{ingredient}</Text>
+        <View style={styles.detailsContainer}>
+          <View style={styles.basicInfo}>
+            <Text style={styles.dishDescription}>{item.description}</Text>
+            
+            {/* Cart Controls */}
+            <View style={styles.cartControls}>
+              <TouchableOpacity 
+                style={[styles.cartButton, styles.addToCartButton]}
+                onPress={() => addToCart(item)}
+              >
+                <Text style={styles.cartButtonText}>Add to Cart</Text>
+              </TouchableOpacity>
+              
+              {quantity > 0 && (
+                <View style={styles.quantityControls}>
+                  <TouchableOpacity 
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.id, -1)}
+                  >
+                    <Text style={styles.quantityButtonText}>-</Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.quantityText}>{quantity} in cart</Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.quantityButton}
+                    onPress={() => updateQuantity(item.id, 1)}
+                  >
+                    <Text style={styles.quantityButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Prep Time</Text>
+                <Text style={styles.statValue}>{item.preparationTime}</Text>
               </View>
-            ))}
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Difficulty</Text>
+                <Text style={styles.statValue}>{item.difficulty}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Calories</Text>
+                <Text style={styles.statValue}>{item.calories}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Ingredients</Text>
+            <View style={styles.ingredientsList}>
+              {item.ingredients.map((ingredient: string, idx: number) => (
+                <View key={idx} style={styles.ingredientItem}>
+                  <Text style={styles.ingredientDot}>•</Text>
+                  <Text style={styles.ingredientText}>{ingredient}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Chef's Tips</Text>
+            <View style={styles.tipsContainer}>
+              <Text style={styles.tipsText}>{item.chefTips}</Text>
+            </View>
+          </View>
+
+          <View style={styles.navigationHelp}>
+            <Text style={styles.navigationText}>
+              Swipe to explore more dishes
+            </Text>
           </View>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chef's Tips</Text>
-          <View style={styles.tipsContainer}>
-            <Text style={styles.tipsText}>{item.chefTips}</Text>
-          </View>
-        </View>
-
-        <View style={styles.navigationHelp}>
-          <Text style={styles.navigationText}>
-            Swipe to explore more dishes
-          </Text>
-        </View>
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    );
+  };
 
   const renderPagination = () => {
     return (
       <View style={styles.paginationContainer}>
         <View style={styles.paginationDots}>
-          {allDishes.map((_, index) => (
+          {filteredDishes.map((_, index) => (
             <TouchableOpacity
               key={index}
               style={[
@@ -246,11 +629,112 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
           ))}
         </View>
         <Text style={styles.paginationText}>
-          {currentIndex + 1} / {allDishes.length}
+          {currentIndex + 1} / {filteredDishes.length}
         </Text>
       </View>
     );
   };
+
+  const renderCartModal = () => (
+    <Modal
+      visible={isCartVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setIsCartVisible(false)}
+    >
+      <View style={styles.cartModalContainer}>
+        <View style={styles.cartModalContent}>
+          <View style={styles.cartModalHeader}>
+            <Text style={styles.cartModalTitle}>Your Cart</Text>
+            <TouchableOpacity onPress={() => setIsCartVisible(false)}>
+              <Text style={styles.cartCloseButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {cartItems.length === 0 ? (
+            <View style={styles.emptyCartContainer}>
+              <Text style={styles.emptyCartText}>Your cart is empty</Text>
+              <Text style={styles.emptyCartSubtext}>
+                Browse dishes and add items to get started
+              </Text>
+            </View>
+          ) : (
+            <>
+              <ScrollView style={styles.cartItemsList}>
+                {cartItems.map((item) => (
+                  <View key={item.id} style={styles.cartItemRow}>
+                    <Image source={item.image} style={styles.cartItemImage} />
+                    <View style={styles.cartItemDetails}>
+                      <Text style={styles.cartItemName}>{item.title}</Text>
+                      <Text style={styles.cartItemCategory}>{item.category}</Text>
+                      <Text style={styles.cartItemPrice}>R{item.price} each</Text>
+                    </View>
+                    <View style={styles.cartItemControls}>
+                      <View style={styles.cartQuantityControls}>
+                        <TouchableOpacity 
+                          style={styles.cartQuantityButton}
+                          onPress={() => updateQuantity(item.id, -1)}
+                        >
+                          <Text style={styles.cartQuantityButtonText}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.cartQuantityText}>{item.quantity}</Text>
+                        <TouchableOpacity 
+                          style={styles.cartQuantityButton}
+                          onPress={() => updateQuantity(item.id, 1)}
+                        >
+                          <Text style={styles.cartQuantityButtonText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.cartItemTotal}>
+                        R{(item.price * item.quantity).toFixed(2)}
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.removeItemButton}
+                        onPress={() => removeFromCart(item.id)}
+                      >
+                        <Text style={styles.removeItemButtonText}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+              
+              <View style={styles.cartTotalContainer}>
+                <View style={styles.cartTotalRow}>
+                  <Text style={styles.cartTotalLabel}>Subtotal:</Text>
+                  <Text style={styles.cartTotalValue}>R{getTotalPrice()}</Text>
+                </View>
+                <View style={styles.cartTotalRow}>
+                  <Text style={styles.cartTotalLabel}>Items:</Text>
+                  <Text style={styles.cartTotalValue}>{getItemCount()}</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.checkoutButton}
+                  onPress={() => {
+                    Alert.alert(
+                      'Checkout',
+                      `Total: R${getTotalPrice()}\n\nThank you for your order!`,
+                      [{ text: 'OK', onPress: () => setCartItems([]) }]
+                    );
+                  }}
+                >
+                  <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.clearCartButton}
+                  onPress={clearCart}
+                >
+                  <Text style={styles.clearCartButtonText}>Clear Cart</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -263,23 +747,48 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
         >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Dishes</Text>
-        <TouchableOpacity 
-          style={styles.helpButton}
-          onPress={showScrollAlert}
-        >
-          <Text style={styles.helpButtonText}>Help</Text>
-        </TouchableOpacity>
+        
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>
+            {filterBy === 'All' ? 'All Dishes' : filterBy}
+          </Text>
+          {courseId && (
+            <Text style={styles.headerSubtitle}>
+              {courses.find(c => c.id === courseId)?.title}
+            </Text>
+          )}
+        </View>
+        
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.helpButton}
+            onPress={showScrollAlert}
+          >
+            <Text style={styles.helpButtonText}>?</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.cartIconButton}
+            onPress={() => setIsCartVisible(true)}
+          >
+            <Text style={styles.cartIcon}>🛒</Text>
+            {cartItems.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{getItemCount()}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.courseTitleContainer}>
         <Text style={styles.courseTitle}>
-          {courses.find(course => 
-            course.dishes.some((dish: any) => dish.id === allDishes[currentIndex]?.id)
-          )?.title || 'All Dishes'}
+          {filteredCourses.find(course => 
+            course.dishes.some((dish: any) => dish.id === filteredDishes[currentIndex]?.id)
+          )?.title || 'Menu'}
         </Text>
         <Text style={styles.courseSubtitle}>
-          Swipe to explore all dishes
+          Swipe to explore all dishes • Tap items to add to cart
         </Text>
       </View>
 
@@ -294,7 +803,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
           scrollEventThrottle={16}
           style={styles.carousel}
         >
-          {allDishes.map((dish, index) => (
+          {filteredDishes.map((dish, index) => (
             <View key={dish.id} style={styles.carouselItem}>
               {renderDishItem({ item: dish, index })}
             </View>
@@ -303,6 +812,7 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
       </View>
 
       {renderPagination()}
+      {renderCartModal()}
 
       <View style={styles.navigationArrows}>
         <TouchableOpacity 
@@ -314,13 +824,23 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({ navigation, route, isCh
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.arrowButton, currentIndex === allDishes.length - 1 && styles.arrowButtonDisabled]}
-          onPress={() => scrollToIndex(Math.min(allDishes.length - 1, currentIndex + 1))}
-          disabled={currentIndex === allDishes.length - 1}
+          style={[styles.arrowButton, currentIndex === filteredDishes.length - 1 && styles.arrowButtonDisabled]}
+          onPress={() => scrollToIndex(Math.min(filteredDishes.length - 1, currentIndex + 1))}
+          disabled={currentIndex === filteredDishes.length - 1}
         >
           <Text style={styles.arrowText}>→</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Chef-only Add Dish Button */}
+      {isChef && (
+        <TouchableOpacity 
+          style={styles.floatingAddButton}
+          onPress={() => navigation.navigate('Private Menu')}
+        >
+          <Text style={styles.floatingAddButtonText}>+ Add New Dish</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -334,72 +854,94 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    backgroundColor: '#1f2937',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  backButton: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  backButtonText: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#fff',
-    letterSpacing: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  helpButton: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  helpButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  courseTitleContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#1f2937',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
+  backButton: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#e5e7eb',
+    marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  helpButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  cartIconButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  cartIcon: {
+    fontSize: 24,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  courseTitleContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
   courseTitle: {
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 4,
   },
   courseSubtitle: {
     fontSize: 14,
     color: '#e5e7eb',
     textAlign: 'center',
-    fontWeight: '500',
   },
   carouselContainer: {
     flex: 1,
@@ -415,6 +957,7 @@ const styles = StyleSheet.create({
   },
   dishContent: {
     flexGrow: 1,
+    paddingBottom: 100,
   },
   imageContainer: {
     height: screenHeight * 0.4,
@@ -454,14 +997,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   dishBadgeText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '800',
-    letterSpacing: 0.5,
+  },
+  chefAddButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chefAddButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   detailsContainer: {
     flex: 1,
@@ -471,7 +1027,6 @@ const styles = StyleSheet.create({
     marginTop: -30,
     paddingTop: 30,
     paddingHorizontal: 20,
-    paddingBottom: 100,
   },
   basicInfo: {
     marginBottom: 30,
@@ -482,6 +1037,48 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 20,
     fontWeight: '500',
+  },
+  cartControls: {
+    marginBottom: 20,
+  },
+  cartButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  addToCartButton: {
+    backgroundColor: 'rgba(236, 72, 153, 0.9)',
+  },
+  cartButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  quantityButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(236, 72, 153, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  quantityText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '600',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -494,8 +1091,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   statItem: {
     alignItems: 'center',
@@ -507,7 +1102,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   statValue: {
     fontSize: 16,
@@ -522,7 +1116,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1f2937',
     marginBottom: 16,
-    letterSpacing: 0.5,
   },
   ingredientsList: {
     backgroundColor: '#fff',
@@ -533,8 +1126,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   ingredientItem: {
     flexDirection: 'row',
@@ -559,31 +1150,21 @@ const styles = StyleSheet.create({
     padding: 20,
     borderLeftWidth: 4,
     borderLeftColor: 'rgba(236, 72, 153, 0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   tipsText: {
     fontSize: 15,
     color: '#6b7280',
     fontStyle: 'italic',
     lineHeight: 22,
-    fontWeight: '500',
   },
   navigationHelp: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
+    marginBottom: 40,
     borderLeftWidth: 4,
     borderLeftColor: 'rgba(236, 72, 153, 0.9)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
   },
   navigationText: {
     fontSize: 14,
@@ -619,9 +1200,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   navigationArrows: {
     position: 'absolute',
@@ -644,8 +1222,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   arrowButtonDisabled: {
     opacity: 0.3,
@@ -654,6 +1230,197 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#1f2937',
     fontWeight: 'bold',
+  },
+  floatingAddButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.9)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  floatingAddButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  // Cart Modal Styles
+  cartModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  cartModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    maxHeight: screenHeight * 0.8,
+  },
+  cartModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  cartModalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1f2937',
+  },
+  cartCloseButton: {
+    fontSize: 24,
+    color: '#6b7280',
+    fontWeight: 'bold',
+  },
+  emptyCartContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyCartText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  emptyCartSubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+  },
+  cartItemsList: {
+    maxHeight: screenHeight * 0.5,
+    paddingHorizontal: 16,
+  },
+  cartItemRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    alignItems: 'center',
+  },
+  cartItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  cartItemDetails: {
+    flex: 1,
+  },
+  cartItemName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  cartItemCategory: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  cartItemPrice: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  cartItemControls: {
+    alignItems: 'flex-end',
+  },
+  cartQuantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cartQuantityButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartQuantityButtonText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: 'bold',
+  },
+  cartQuantityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginHorizontal: 12,
+  },
+  cartItemTotal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  removeItemButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  removeItemButtonText: {
+    fontSize: 12,
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  cartTotalContainer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  cartTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  cartTotalLabel: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  cartTotalValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1f2937',
+  },
+  checkoutButton: {
+    backgroundColor: 'rgba(236, 72, 153, 0.9)',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  checkoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  clearCartButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  clearCartButtonText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

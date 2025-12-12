@@ -61,7 +61,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   // Chef login handler - navigate to Private Menu
   const handleChefLogin = (user: User) => {
-    navigation.navigate('Private Menu'); // Make sure this matches your screen name
+    navigation.navigate('PrivateMenu'); 
   };
 
   // User login handler - navigate to User Menu
