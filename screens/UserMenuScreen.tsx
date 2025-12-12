@@ -65,7 +65,6 @@ const UserMenuScreen: React.FC<UserMenuScreenProps> = ({
           chefTips: 'Braise at low temperature for maximum tenderness',
           category: 'Hot plates'
         },
-         },
          {
           id: 2,
           title: 'Seared Salmon Steak',
