@@ -18,8 +18,7 @@ type CourseScreenProps = {
   currentUser: any;
 };
 
-// 
-// For now, I'll create a mock structure
+//Mock structure for calculator
 const mockDishesByCourse = {
   'Hot plates': [
     { price: 34.99 },
@@ -150,7 +149,7 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
 
   const handleAddDishPress = () => {
     if (isChef && currentUser) {
-      navigation.navigate('Private Menu');
+      navigation.navigate('PrivateMenu');
     } else {
       navigation.navigate('Profile');
     }
@@ -193,16 +192,11 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
             <TouchableOpacity style={styles.menuItem} onPress={() => navigateToScreen('Home')}>
               <Text style={styles.menuItemText}>Home</Text>
             </TouchableOpacity>
-            {isChef && (
-              <TouchableOpacity style={styles.menuItem} onPress={() => navigateToScreen('Private Menu')}>
-                <Text style={styles.menuItemText}>Chef Dashboard</Text>
-              </TouchableOpacity>
-            )}
           </Animated.View>
         </TouchableOpacity>
       </Modal>
 
-      {/* Course Categories Grid */}
+      {/* Course Categories Cards */}
       <ScrollView 
         contentContainerStyle={styles.courseGrid}
         showsVerticalScrollIndicator={false}
@@ -238,7 +232,7 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ navigation, isChef, current
         })}
       </ScrollView>
 
-      {/* Chef-only Add Dish Button */}
+      {/* only Chef can see Add Dish Button */}
       {isChef && (
         <TouchableOpacity 
           style={styles.addDishButton} 

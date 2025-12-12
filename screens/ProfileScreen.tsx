@@ -61,7 +61,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   // Chef login handler - navigate to Private Menu
   const handleChefLogin = (user: User) => {
-    navigation.navigate('PrivateMenu'); 
+    navigation.navigate('PrivateMenu'); // Make sure this matches your screen name
   };
 
   // User login handler - navigate to User Menu
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginTop: 8, 
     backgroundColor: 'rgba(236, 72, 153, 0.9)' 
-    },
+  },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });
 

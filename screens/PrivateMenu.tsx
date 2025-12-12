@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Modal, Alert, FlatList, KeyboardAvoidingView, Platform, } from 'react-native';
+import { 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  TextInput, Image, Modal, Alert, FlatList, 
+  KeyboardAvoidingView, Platform 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PrivateMenuScreenProps = {
@@ -23,31 +27,44 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  const categories = ['Appetizer', 'Main Course', 'Dessert', 'Beverage', 'Side Dish', 'Special'];
+  // Updated categories to match CourseScreen
+  const categories = ['Hot plates', 'Cold plates', 'Baked goods', 'Beverages'];
 
   useEffect(() => {
+    // Load saved drafts with updated categories
     const savedDrafts = [
       {
         id: '1',
-        title: 'Spicy Tuna Roll',
-        description: 'Fresh tuna with spicy mayo and cucumber',
-        price: '14.99',
-        category: 'Main Course',
-        ingredients: 'Tuna, spicy mayo, cucumber, rice, nori',
-        preparationTime: '20',
+        title: 'Braised Lamb Shank',
+        description: 'Tender lamb slow-cooked in red wine and herbs',
+        price: '34.99',
+        category: 'Hot plates',
+        ingredients: 'Lamb shank, red wine, fresh rosemary, garlic, carrots, potatoes',
+        preparationTime: '180',
         status: 'draft',
         createdAt: new Date('2024-01-15'),
       },
       {
         id: '2',
-        title: 'Chocolate Lava Cake',
-        description: 'Warm chocolate cake with molten center',
-        price: '8.99',
-        category: 'Dessert',
-        ingredients: 'Chocolate, flour, eggs, butter, sugar',
+        title: 'Smoked Salmon Platter',
+        description: 'House-smoked salmon with capers, red onion and crème fraîche',
+        price: '22.99',
+        category: 'Cold plates',
+        ingredients: 'Smoked salmon, capers, red onion, crème fraîche, lemon, dill, rye bread',
         preparationTime: '15',
         status: 'draft',
         createdAt: new Date('2024-01-10'),
+      },
+      {
+        id: '3',
+        title: 'Chocolate Éclairs',
+        description: 'Choux pastry filled with vanilla cream and chocolate glaze',
+        price: '7.99',
+        category: 'Baked goods',
+        ingredients: 'Choux pastry, vanilla pastry cream, dark chocolate, cream, powdered sugar',
+        preparationTime: '120',
+        status: 'draft',
+        createdAt: new Date('2024-01-05'),
       }
     ];
     setDrafts(savedDrafts);
@@ -175,31 +192,54 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
   const handlePublishDraft = (draft: any) => {
     Alert.alert(
       'Publish Dish',
-      'Ready to publish this dish to the main menu?',
+      `Ready to publish "${draft.title}" to the ${draft.category} menu?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Publish',
           onPress: () => {
             setDrafts(prev => prev.filter(d => d.id !== draft.id));
-            Alert.alert('Published!', 'Dish has been published to the main menu.');
+            Alert.alert(
+              'Published!', 
+              `"${draft.title}" has been published to the ${draft.category} menu.`,
+              [
+                { 
+                  text: 'View Menu', 
+                  onPress: () => navigation.navigate('Courses') 
+                },
+                { text: 'OK', style: 'default' }
+              ]
+            );
           }
         }
       ]
     );
   };
 
+  // Navigate back to Courses screen
+  const handleBackPress = () => {
+    navigation.navigate('Courses');
+  };
+
   const renderDraftItem = ({ item }: { item: any }) => (
     <View style={styles.draftCard}>
       <View style={styles.draftHeader}>
         <Text style={styles.draftTitle}>{item.title}</Text>
-        <Text style={styles.draftCategory}>{item.category}</Text>
+        <View style={[
+          styles.categoryBadge,
+          { backgroundColor: getCategoryColor(item.category) }
+        ]}>
+          <Text style={styles.categoryBadgeText}>{item.category}</Text>
+        </View>
       </View>
       
       <Text style={styles.draftDescription}>{item.description}</Text>
       
       <View style={styles.draftDetails}>
-        <Text style={styles.draftPrice}>${item.price}</Text>
+        <View style={styles.priceContainer}>
+          <Text style={styles.currencySymbol}>R</Text>
+          <Text style={styles.draftPrice}>{item.price}</Text>
+        </View>
         <Text style={styles.draftTime}>{item.preparationTime} mins</Text>
       </View>
 
@@ -237,19 +277,35 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
     </View>
   );
 
+  // Helper function for category colors
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'Hot plates':
+        return 'rgba(239, 68, 68, 0.9)'; // Red
+      case 'Cold plates':
+        return 'rgba(59, 130, 246, 0.9)'; // Blue
+      case 'Baked goods':
+        return 'rgba(234, 179, 8, 0.9)'; // Yellow
+      case 'Beverages':
+        return 'rgba(16, 185, 129, 0.9)'; // Green
+      default:
+        return 'rgba(236, 72, 153, 0.9)'; // Pink (default)
+    }
+  };
+
   if (!isChef) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.accessDeniedContainer}>
-          <Text style={styles.accessDeniedTitle}>Access Denied</Text>
+          <Text style={styles.accessDeniedTitle}>🔒 Access Denied</Text>
           <Text style={styles.accessDeniedText}>
             This section is only available for chefs. Please log in with chef credentials to access the private menu.
           </Text>
           <TouchableOpacity 
             style={styles.loginButton}
-            onPress={() => navigation.navigate('Profile')}
+            onPress={() => navigation.navigate('Courses')}
           >
-            <Text style={styles.loginButtonText}>Go to Login</Text>
+            <Text style={styles.loginButtonText}>Back to Menu</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -265,24 +321,36 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={handleBackPress}
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Private Menu</Text>
-          <View style={styles.headerPlaceholder} />
-        </View>
-
-        <View style={styles.actionBar}>
-          <Text style={styles.draftsCount}>
-            {drafts.length} {drafts.length === 1 ? 'Draft' : 'Drafts'}
-          </Text>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Chef's Kitchen</Text>
+            <Text style={styles.headerSubtitle}>Private Menu Drafts</Text>
+          </View>
           <TouchableOpacity 
             style={styles.createButton}
             onPress={() => setIsCreateModalVisible(true)}
           >
-            <Text style={styles.createButtonText}>+ New Draft</Text>
+            <Text style={styles.createButtonText}>+</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>{drafts.length}</Text>
+            <Text style={styles.statLabel}>Total Drafts</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>
+              {categories.reduce((count, category) => 
+                count + (drafts.filter(d => d.category === category).length > 0 ? 1 : 0), 0
+              )}
+            </Text>
+            <Text style={styles.statLabel}>Categories</Text>
+          </View>
         </View>
 
         {drafts.length > 0 ? (
@@ -292,18 +360,30 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
             keyExtractor={item => item.id}
             contentContainerStyle={styles.draftsList}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <Text style={styles.listHeader}>
+                Your Drafts ({drafts.length})
+              </Text>
+            }
           />
         ) : (
           <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>👨‍🍳</Text>
             <Text style={styles.emptyStateTitle}>No Drafts Yet</Text>
             <Text style={styles.emptyStateText}>
-              Start creating your culinary masterpieces! Your drafts will appear here where you can edit and publish them when ready.
+              Create your culinary masterpieces here! Drafts will appear where you can edit and publish them when ready.
             </Text>
             <TouchableOpacity 
               style={styles.emptyStateButton}
               onPress={() => setIsCreateModalVisible(true)}
             >
-              <Text style={styles.emptyStateButtonText}>Create Your First Draft</Text>
+              <Text style={styles.emptyStateButtonText}>Create First Draft</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.backToMenuButton}
+              onPress={handleBackPress}
+            >
+              <Text style={styles.backToMenuButtonText}>Back to Courses</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -321,7 +401,7 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
             <ScrollView style={styles.modalScroll}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingDraft ? 'Edit Draft' : 'Create New Draft'}
+                  {editingDraft ? 'Edit Dish Draft' : 'Create New Dish'}
                 </Text>
                 <TouchableOpacity 
                   onPress={() => {
@@ -342,6 +422,7 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
                     placeholder="Enter dish title"
                     value={formData.title}
                     onChangeText={(value) => handleInputChange('title', value)}
+                    placeholderTextColor="#94a3b8"
                   />
                   {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
                 </View>
@@ -357,73 +438,89 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
                     multiline
                     numberOfLines={3}
                     textAlignVertical="top"
+                    placeholderTextColor="#94a3b8"
                   />
                   {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
                 </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Price (R) *</Text>
-                  <TextInput
-                    style={[styles.textInput, errors.price && styles.inputError]}
-                    placeholder="0.00"
-                    value={formData.price}
-                    onChangeText={(value) => handleInputChange('price', value)}
-                    keyboardType="decimal-pad"
-                  />
-                  {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
+                <View style={styles.inputRow}>
+                  <View style={[styles.inputGroup, { flex: 1, marginRight: 12 }]}>
+                    <Text style={styles.inputLabel}>Price (R) *</Text>
+                    <View style={styles.priceInputContainer}>
+                      <Text style={styles.pricePrefix}>R</Text>
+                      <TextInput
+                        style={[styles.priceInput, errors.price && styles.inputError]}
+                        placeholder="0.00"
+                        value={formData.price}
+                        onChangeText={(value) => handleInputChange('price', value)}
+                        keyboardType="decimal-pad"
+                        placeholderTextColor="#94a3b8"
+                      />
+                    </View>
+                    {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
+                  </View>
+
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.inputLabel}>Prep Time (mins) *</Text>
+                    <TextInput
+                      style={[styles.textInput, errors.preparationTime && styles.inputError]}
+                      placeholder="30"
+                      value={formData.preparationTime}
+                      onChangeText={(value) => handleInputChange('preparationTime', value)}
+                      keyboardType="number-pad"
+                      placeholderTextColor="#94a3b8"
+                    />
+                    {errors.preparationTime && <Text style={styles.errorText}>{errors.preparationTime}</Text>}
+                  </View>
                 </View>
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Category *</Text>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.categoriesContainer}
-                  >
+                  <Text style={styles.categorySubLabel}>
+                    Choose one of the main course categories
+                  </Text>
+                  <View style={styles.categoriesGrid}>
                     {categories.map((category) => (
                       <TouchableOpacity
                         key={category}
                         style={[
-                          styles.categoryChip,
-                          formData.category === category && styles.categoryChipSelected
+                          styles.categoryButton,
+                          formData.category === category && 
+                          styles.categoryButtonSelected,
+                          { borderColor: getCategoryColor(category) }
                         ]}
                         onPress={() => handleInputChange('category', category)}
                       >
                         <Text style={[
-                          styles.categoryChipText,
-                          formData.category === category && styles.categoryChipTextSelected
+                          styles.categoryButtonText,
+                          formData.category === category && styles.categoryButtonTextSelected
                         ]}>
                           {category}
                         </Text>
+                        {formData.category === category && (
+                          <Text style={styles.categoryCheck}>✓</Text>
+                        )}
                       </TouchableOpacity>
                     ))}
-                  </ScrollView>
+                  </View>
                   {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Preparation Time (Enter number of minutes) *</Text>
-                  <TextInput
-                    style={[styles.textInput, errors.preparationTime && styles.inputError]}
-                    placeholder="30"
-                    value={formData.preparationTime}
-                    onChangeText={(value) => handleInputChange('preparationTime', value)}
-                    keyboardType="number-pad"
-                  />
-                  {errors.preparationTime && <Text style={styles.errorText}>{errors.preparationTime}</Text>}
                 </View>
 
                 {/* Ingredients */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Ingredients *</Text>
+                  <Text style={styles.ingredientsHint}>
+                    Separate ingredients with commas
+                  </Text>
                   <TextInput
                     style={[styles.textArea, errors.ingredients && styles.inputError]}
-                    placeholder="List ingredients separated by commas"
+                    placeholder="e.g., Chicken, garlic, olive oil, rosemary, salt"
                     value={formData.ingredients}
                     onChangeText={(value) => handleInputChange('ingredients', value)}
                     multiline
                     numberOfLines={3}
                     textAlignVertical="top"
+                    placeholderTextColor="#94a3b8"
                   />
                   {errors.ingredients && <Text style={styles.errorText}>{errors.ingredients}</Text>}
                 </View>
@@ -445,7 +542,7 @@ const PrivateMenuScreen: React.FC<PrivateMenuScreenProps> = ({ navigation, isChe
                     onPress={handleCreateDraft}
                   >
                     <Text style={styles.saveButtonText}>
-                      {editingDraft ? 'Update Draft' : 'Save Draft'}
+                      {editingDraft ? 'Update Draft' : 'Save as Draft'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -467,75 +564,100 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#1f2937',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButton: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
   },
+  headerCenter: {
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
     color: '#fff',
-    letterSpacing: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    letterSpacing: 0.5,
   },
-  headerPlaceholder: {
-    width: 40,
-  },
-  actionBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#1f2937',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  draftsCount: {
-    fontSize: 16,
-    fontWeight: '700',
+  headerSubtitle: {
+    fontSize: 12,
     color: '#e5e7eb',
+    marginTop: 2,
+    fontWeight: '500',
   },
   createButton: {
     backgroundColor: 'rgba(236, 72, 153, 0.9)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#ec4899',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   createButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 16,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#fff',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#e5e7eb',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  listHeader: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   draftsList: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingBottom: 32,
   },
   draftCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -554,46 +676,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   draftTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#1f2937',
     flex: 1,
     marginRight: 12,
     letterSpacing: 0.5,
   },
-  draftCategory: {
-    fontSize: 12,
+  categoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  categoryBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
     color: '#fff',
-    backgroundColor: 'rgba(236, 72, 153, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   draftDescription: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 12,
+    marginBottom: 16,
     lineHeight: 20,
     fontWeight: '500',
   },
   draftDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  currencySymbol: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginRight: 2,
   },
   draftPrice: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     color: '#1f2937',
   },
   draftTime: {
     fontSize: 14,
     color: '#6b7280',
     fontWeight: '600',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   draftIngredients: {
     fontSize: 13,
@@ -601,6 +743,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 18,
     fontWeight: '500',
+    fontStyle: 'italic',
   },
   ingredientsLabel: {
     fontWeight: '700',
@@ -609,14 +752,13 @@ const styles = StyleSheet.create({
   draftActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
+    gap: 8,
   },
   actionButton: {
     flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 12,
     borderRadius: 12,
-    marginHorizontal: 4,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -649,7 +791,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
   },
   emptyStateTitle: {
     fontSize: 28,
@@ -657,9 +803,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   emptyStateText: {
     fontSize: 16,
@@ -674,13 +817,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 15,
-    shadowColor: '#ec4899',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   emptyStateButtonText: {
     color: '#fff',
@@ -688,20 +827,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  backToMenuButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 15,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  backToMenuButtonText: {
+    color: '#e5e7eb',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
   accessDeniedContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 32,
   },
   accessDeniedTitle: {
     fontSize: 28,
     fontWeight: '900',
     color: '#ef4444',
     marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   accessDeniedText: {
     fontSize: 16,
@@ -716,13 +867,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 15,
-    shadowColor: '#ec4899',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
+    alignItems: 'center',
   },
   loginButtonText: {
     color: '#fff',
@@ -741,13 +887,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 0.5,
@@ -758,7 +904,11 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   formContainer: {
-    padding: 24,
+    padding: 20,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    marginBottom: 20,
   },
   inputGroup: {
     marginBottom: 20,
@@ -770,6 +920,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: 0.5,
   },
+  categorySubLabel: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  ingredientsHint: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
   textInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 2,
@@ -780,6 +942,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
   },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  pricePrefix: {
+    fontSize: 16,
+    color: '#e5e7eb',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontWeight: '600',
+  },
+  priceInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#fff',
+    paddingVertical: 14,
+    paddingRight: 16,
+  },
   textArea: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 2,
@@ -789,7 +973,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     color: '#fff',
-    minHeight: 80,
+    minHeight: 100,
   },
   inputError: {
     borderColor: '#ef4444',
@@ -800,41 +984,54 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '500',
   },
-  categoriesContainer: {
+  categoriesGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  categoryButton: {
+    flex: 1,
+    minWidth: '45%',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    marginRight: 8,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    position: 'relative',
+  },
+  categoryButtonSelected: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  categoryChipSelected: {
-    backgroundColor: 'rgba(236, 72, 153, 0.9)',
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  categoryChipText: {
+  categoryButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#e5e7eb',
+    textAlign: 'center',
   },
-  categoryChipTextSelected: {
+  categoryButtonTextSelected: {
     color: '#fff',
+    fontWeight: '700',
+  },
+  categoryCheck: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 24,
+    gap: 12,
   },
   modalButton: {
     flex: 1,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
