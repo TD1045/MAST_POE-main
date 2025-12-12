@@ -44,20 +44,19 @@
 -Press 'a' for Android or 'i' for iOS when prompted
 
 ***Project Structure***
-
-MAST_POE-main/
-├── App.tsx
-├── src/
-│   ├── screens/
-│   │   ├── HomeScreen.tsx
-│   │   ├── AddItemScreen.tsx
-│   │   └── FilterScreen.tsx
-│   ├── components/
-│   │   ├── MenuItem.tsx
-│   │   └── CourseFilter.tsx
-│   ├── utils/
-│   │   └── calculations.ts
-│   └── types/
-│       └── MenuItem.ts
-├── README.md
-└── package.json
+-MAST_POE-main/
+-├── App.tsx
+-├── src/
+-│   ├── screens/
+-│   │   ├── HomeScreen.tsx
+-│   │   ├── AddItemScreen.tsx
+-│   │   └── FilterScreen.tsx
+-│   ├── components/
+-│   │   ├── MenuItem.tsx
+-│   │   └── CourseFilter.tsx
+-│   ├── utils/
+-│   │   └── calculations.ts
+-│   └── types/
+-│       └── MenuItem.ts
+-├── README.md
+-└── package.json
